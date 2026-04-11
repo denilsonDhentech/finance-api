@@ -10,4 +10,8 @@ spring:
       ddl-auto: validate
     show-sql: true
   flyway:
-    enabled: false
+    enabled: true
+  security:
+    user:
+      name: administrator
+      password: admin
