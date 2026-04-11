@@ -5,6 +5,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/financial_dhentech_db
     username: administrator
     password: admin
+    hikari:
+      initialization-fail-timeout: 60000
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: validate
