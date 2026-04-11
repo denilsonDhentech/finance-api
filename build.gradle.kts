@@ -1,7 +1,9 @@
 plugins {
 	java
-	id("org.springframework.boot") version "3.5.13"
+	jacoco
+	id("org.springframework.boot") version "3.4.2"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("org.sonarqube") version "5.1.0.4882"
 }
 
 group = "br.com.dhentech"
@@ -9,7 +11,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion.set(JavaLanguageVersion.of(21))
 	}
 }
 
@@ -32,4 +34,25 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+jacoco {
+	toolVersion = "0.8.12"
+}
+
+tasks.jacocoTestReport {
+	dependsOn(tasks.test)
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+	}
+}
+
+sonarqube {
+	properties {
+		property("sonar.projectKey", "denilsonDhentech_finance-api")
+		property("sonar.organization", "dhentech")
+		property("sonar.host.url", "https://sonarcloud.io")
+		property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
+	}
 }
