@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: financial_dhentech_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: administrator
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: financial_dhentech_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - dhentech_pg_data:/var/lib/postgresql/data
+
+volumes:
+  dhentech_pg_data:
