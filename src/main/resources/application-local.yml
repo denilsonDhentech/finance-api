@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/financial_dhentech_db
+    username: administrator
+    password: admin
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
