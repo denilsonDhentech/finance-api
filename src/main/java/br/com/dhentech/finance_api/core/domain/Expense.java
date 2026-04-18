@@ -13,6 +13,9 @@ public class Expense {
     private ExpenseStatus status;
 
     public Expense(String description, BigDecimal amount, LocalDate dueDate, ExpenseType type) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException("Amount must be positive");
+
         this.id = UUID.randomUUID();
         this.description = description;
         this.amount = amount;
