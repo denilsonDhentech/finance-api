@@ -11,6 +11,12 @@ jobs:
     name: Build, Test and Sonar Analysis
     runs-on: ubuntu-latest
 
+    # Variáveis globais para o Job todo
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5432/financial_dhentech_db
+      SPRING_DATASOURCE_USERNAME: administrator
+      SPRING_DATASOURCE_PASSWORD: admin
+
     services:
       postgres:
         image: postgres:15-alpine
@@ -41,19 +47,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Wait for Postgres
-        run: |
-          until nc -z 127.0.0.1 5432; do
-            echo "Aguardando Postgres subir no 127.0.0.1:5432..."
-            sleep 2
-          done
+      - name: Build and Test
+        run: ./gradlew build jacocoTestReport --info
 
-      - name: Build, Test and Analyze
+      - name: SonarCloud Scan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          ./gradlew build jacocoTestReport sonar --info
-          -Dspring.datasource.url=jdbc:postgresql://127.0.0.1:5432/financial_dhentech_db
-          -Dspring.datasource.username=administrator
-          -Dspring.datasource.password=admin
+        run: ./gradlew sonar --info

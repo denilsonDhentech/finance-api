@@ -2,9 +2,9 @@ spring:
   application:
     name: finance-api
   datasource:
-    url: jdbc:postgresql://localhost:5432/financial_dhentech_db
-    username: administrator
-    password: admin
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/financial_dhentech_db}
+    username: ${SPRING_DATASOURCE_USERNAME:administrator}
+    password: ${SPRING_DATASOURCE_PASSWORD:admin}
     hikari:
       initialization-fail-timeout: 60000
       connection-timeout: 30000

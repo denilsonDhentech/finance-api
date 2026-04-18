@@ -34,6 +34,9 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	environment("SPRING_DATASOURCE_URL", System.getenv("SPRING_DATASOURCE_URL") ?: "")
+	environment("SPRING_DATASOURCE_USERNAME", System.getenv("SPRING_DATASOURCE_USERNAME") ?: "")
+	environment("SPRING_DATASOURCE_PASSWORD", System.getenv("SPRING_DATASOURCE_PASSWORD") ?: "")
 }
 
 jacoco {
