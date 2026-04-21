@@ -1,4 +1,8 @@
 package br.com.dhentech.finance_api.core.domain;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -12,7 +16,17 @@ public class Expense {
     private ExpenseType type;
     private ExpenseStatus status;
 
-    public Expense(String description, BigDecimal amount, LocalDate dueDate, ExpenseType type) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    public Expense(){}
+
+    public Expense(String description, BigDecimal amount, LocalDate dueDate, ExpenseType type, User user, Category category) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalArgumentException("Amount must be positive");
 
@@ -22,6 +36,8 @@ public class Expense {
         this.dueDate = dueDate;
         this.type = type;
         this.status = ExpenseStatus.PENDING;
+        this.user = user;
+        this.category = category;
     }
 
     public void markAsPaid() {
@@ -38,4 +54,13 @@ public class Expense {
     public LocalDate getDueDate() { return dueDate; }
     public ExpenseType getType() { return type; }
     public ExpenseStatus getStatus() { return status; }
+
+    @Override
+    public String toString() {
+        return "Expense{" +
+                "id=" + id +
+                ", description='" + description + '\'' +
+                ", amount=" + amount +
+                '}';
+    }
 }

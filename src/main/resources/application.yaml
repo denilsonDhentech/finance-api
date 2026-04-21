@@ -18,3 +18,9 @@ spring:
     user:
       name: administrator
       password: admin
+
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:Xx0C0aTE2xPMzwY0l01xkQWIGzTJSxbhBUbiKAMesEsvwsv1jOJxIHmZBUy2Zi5+hHX1Wg94kjkx4uUDYhWqWQ==}

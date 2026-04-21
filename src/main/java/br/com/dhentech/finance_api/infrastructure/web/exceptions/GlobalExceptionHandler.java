@@ -1,4 +1,4 @@
-package br.com.dhentech.finance_api.infrastructure.web;
+package br.com.dhentech.finance_api.infrastructure.web.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
