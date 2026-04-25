@@ -22,7 +22,9 @@ public class ExpenseRepositoryAdapter implements ExpenseRepositoryPort {
                 expense.getAmount(),
                 expense.getDueDate(),
                 expense.getType(),
-                expense.getStatus()
+                expense.getStatus(),
+                expense.getUser(),
+                expense.getCategory()
         );
 
         jpaRepository.save(entity);

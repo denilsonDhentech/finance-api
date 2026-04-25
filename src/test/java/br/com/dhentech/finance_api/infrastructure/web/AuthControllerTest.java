@@ -2,6 +2,7 @@ package br.com.dhentech.finance_api.infrastructure.web;
 
 import br.com.dhentech.finance_api.application.dto.AuthenticationRequest;
 import br.com.dhentech.finance_api.core.domain.User;
+import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
 import br.com.dhentech.finance_api.infrastructure.security.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private TokenService tokenService;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @Test
     @DisplayName("Deve retornar 200 OK e o Token quando o login for feito com sucesso")
