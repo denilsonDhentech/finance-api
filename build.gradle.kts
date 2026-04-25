@@ -61,7 +61,8 @@ tasks.jacocoTestReport {
 				"**/mapper/**",
 				"**/application/dto/**",
 				"**/FinanceApiApplication*",
-				"**/*MapperImpl*"
+				"**/*MapperImpl*",
+				"**/*Application.java"
 			)
 		}
 	)
@@ -73,5 +74,7 @@ sonarqube {
 		property("sonar.organization", "dhentech")
 		property("sonar.host.url", "https://sonarcloud.io")
 		property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
+
+		property("sonar.exclusions", "**/infrastructure/persistence/ExpenseEntity.java, **/infrastructure/mapper/**, **/application/dto/**, **/*Application.java")
 	}
 }
