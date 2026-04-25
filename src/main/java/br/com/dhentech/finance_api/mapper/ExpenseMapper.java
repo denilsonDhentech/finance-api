@@ -13,4 +13,6 @@ public interface ExpenseMapper {
 
     @Mapping(source = "category.name", target = "categoryName")
     ExpenseResponse toResponse(ExpenseEntity entity);
+
+    ExpenseEntity toEntity(Expense expense);
 }

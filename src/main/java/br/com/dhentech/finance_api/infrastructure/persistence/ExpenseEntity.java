@@ -1,9 +1,6 @@
 package br.com.dhentech.finance_api.infrastructure.persistence;
 
-import br.com.dhentech.finance_api.core.domain.Category;
-import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
-import br.com.dhentech.finance_api.core.domain.ExpenseType;
-import br.com.dhentech.finance_api.core.domain.User;
+import br.com.dhentech.finance_api.core.domain.*;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -70,4 +67,17 @@ public class ExpenseEntity {
     public User getUser() { return user; }
 
     public Category getCategory() { return category; }
+
+    public static ExpenseEntity fromDomain(Expense expense) {
+        return new ExpenseEntity(
+                expense.getId(),
+                expense.getDescription(),
+                expense.getAmount(),
+                expense.getDueDate(),
+                expense.getType(),
+                expense.getStatus(),
+                expense.getUser(),
+                expense.getCategory()
+        );
+    }
 }
