@@ -28,4 +28,23 @@ class TokenServiceTest {
         assertNotNull(token);
         assertFalse(token.isEmpty());
     }
+
+    @Test
+    void shouldValidateTokenAndReturnEmail() {
+        User user = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "hash123");
+        String token = tokenService.generateToken(user);
+
+        String email = tokenService.validateToken(token);
+
+        assertEquals("denilson@teste.com", email);
+    }
+
+    @Test
+    void shouldReturnEmptyStringWhenTokenIsInvalid() {
+        String invalidToken = "token-totalmente-invalido.123.456";
+
+        String email = tokenService.validateToken(invalidToken);
+
+        assertEquals("", email);
+    }
 }

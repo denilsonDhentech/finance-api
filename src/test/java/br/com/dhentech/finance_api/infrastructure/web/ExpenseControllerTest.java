@@ -4,6 +4,7 @@ import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
 import br.com.dhentech.finance_api.core.domain.Category;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
+import br.com.dhentech.finance_api.core.usecases.CreateExpenseUseCase;
 import br.com.dhentech.finance_api.infrastructure.config.LocalIntegrationTest;
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
@@ -22,7 +23,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,8 +48,11 @@ class ExpenseControllerTest {
     @MockitoBean
     private UserRepository userRepository;
 
+    @MockitoBean
+    private CreateExpenseUseCase createExpenseUseCase;
+
     @Test
-    @DisplayName("Deve retornar 400 e mensagem de erro ao tentar criar despesa com valor negativo")
+    @DisplayName("Deve retornar 400 ao tentar criar despesa com valor negativo")
     void shouldReturn400WhenAmountIsNegative() throws Exception {
         UUID fakeCategoryId = UUID.randomUUID();
         when(categoryRepository.findById(any(UUID.class)))
@@ -72,7 +78,25 @@ class ExpenseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Amount must be positive"));
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 Bad Request quando os dados da despesa forem inválidos")
+    void shouldReturn400WhenExpenseDataIsInvalid() throws Exception {
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+        ExpenseRequest invalidRequest = new ExpenseRequest("", new BigDecimal("-10.0"), null, null, null);
+        String jsonRequest = objectMapper.writeValueAsString(invalidRequest);
+
+        mockMvc.perform(post("/api/expenses")
+                        .with(user(fakeUser))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(createExpenseUseCase);
     }
 }

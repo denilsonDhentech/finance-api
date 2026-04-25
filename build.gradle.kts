@@ -37,6 +37,7 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	jvmArgs("-XX:+EnableDynamicAgentLoading", "-Dnet.bytebuddy.experimental=true")
 	environment("SPRING_DATASOURCE_URL", System.getenv("SPRING_DATASOURCE_URL") ?: "")
 	environment("SPRING_DATASOURCE_USERNAME", System.getenv("SPRING_DATASOURCE_USERNAME") ?: "")
 	environment("SPRING_DATASOURCE_PASSWORD", System.getenv("SPRING_DATASOURCE_PASSWORD") ?: "")
@@ -52,6 +53,18 @@ tasks.jacocoTestReport {
 		xml.required.set(true)
 		html.required.set(true)
 	}
+
+	classDirectories.setFrom(
+		sourceSets.main.get().output.asFileTree.matching {
+			exclude(
+				"**/infrastructure/persistence/ExpenseEntity*",
+				"**/mapper/**",
+				"**/application/dto/**",
+				"**/FinanceApiApplication*",
+				"**/*MapperImpl*"
+			)
+		}
+	)
 }
 
 sonarqube {

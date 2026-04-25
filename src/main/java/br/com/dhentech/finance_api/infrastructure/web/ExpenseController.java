@@ -5,6 +5,7 @@ import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
 import br.com.dhentech.finance_api.core.domain.User;
 import br.com.dhentech.finance_api.core.usecases.CreateExpenseUseCase;
 import br.com.dhentech.finance_api.core.usecases.ListExpensesUseCase;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -28,7 +29,7 @@ public class ExpenseController {
 
     @PostMapping
     public ResponseEntity<ExpenseResponse> create(
-            @RequestBody ExpenseRequest request,
+            @RequestBody @Valid ExpenseRequest request,
             @AuthenticationPrincipal User loggedUser
     ) {
         ExpenseResponse response = createExpenseUseCase.execute(request, loggedUser.getId());
