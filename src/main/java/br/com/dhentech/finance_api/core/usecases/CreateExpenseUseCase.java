@@ -11,32 +11,49 @@ import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
 import br.com.dhentech.finance_api.mapper.ExpenseMapper;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.UUID;
+
 @Service
 public class CreateExpenseUseCase {
 
     private final ExpenseRepositoryPort repositoryPort;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ExpenseMapper expenseMapper;
 
     public CreateExpenseUseCase(ExpenseRepositoryPort repositoryPort,
                                 CategoryRepository categoryRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                ExpenseMapper expenseMapper) {
         this.repositoryPort = repositoryPort;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.expenseMapper = expenseMapper;
     }
 
-    public ExpenseResponse execute(ExpenseRequest request) {
+    public ExpenseResponse execute(ExpenseRequest request, UUID loggedUserId) {
+
+        if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada para o ID informado"));
 
-        User loggedUser = userRepository.findAll().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("Nenhum usuário cadastrado no banco. Por favor, crie um usuário primeiro!"));
+        User loggedUser = userRepository.findById(loggedUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado ou não autorizado"));
 
-        Expense expense = ExpenseMapper.toDomain(request, loggedUser, category);
+        Expense expense = new Expense(
+                request.description(),
+                request.amount(),
+                request.dueDate(),
+                request.type(),
+                loggedUser,
+                category
+        );
 
         Expense savedExpense = repositoryPort.save(expense);
-
-        return ExpenseMapper.toResponse(savedExpense);
+        return expenseMapper.toResponse(savedExpense);
     }
 }

@@ -31,10 +31,13 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("com.auth0:java-jwt:4.4.0")
+	implementation("org.mapstruct:mapstruct:1.5.5.Final")
+	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 }
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	jvmArgs("-XX:+EnableDynamicAgentLoading", "-Dnet.bytebuddy.experimental=true")
 	environment("SPRING_DATASOURCE_URL", System.getenv("SPRING_DATASOURCE_URL") ?: "")
 	environment("SPRING_DATASOURCE_USERNAME", System.getenv("SPRING_DATASOURCE_USERNAME") ?: "")
 	environment("SPRING_DATASOURCE_PASSWORD", System.getenv("SPRING_DATASOURCE_PASSWORD") ?: "")
@@ -50,6 +53,19 @@ tasks.jacocoTestReport {
 		xml.required.set(true)
 		html.required.set(true)
 	}
+
+	classDirectories.setFrom(
+		sourceSets.main.get().output.asFileTree.matching {
+			exclude(
+				"**/infrastructure/persistence/ExpenseEntity*",
+				"**/mapper/**",
+				"**/application/dto/**",
+				"**/FinanceApiApplication*",
+				"**/*MapperImpl*",
+				"**/*Application.java"
+			)
+		}
+	)
 }
 
 sonarqube {
@@ -58,5 +74,7 @@ sonarqube {
 		property("sonar.organization", "dhentech")
 		property("sonar.host.url", "https://sonarcloud.io")
 		property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
+
+		property("sonar.exclusions", "**/infrastructure/persistence/ExpenseEntity.java, **/infrastructure/mapper/**, **/application/dto/**, **/*Application.java")
 	}
 }

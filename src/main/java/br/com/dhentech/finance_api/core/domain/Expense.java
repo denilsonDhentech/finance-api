@@ -54,6 +54,8 @@ public class Expense {
     public LocalDate getDueDate() { return dueDate; }
     public ExpenseType getType() { return type; }
     public ExpenseStatus getStatus() { return status; }
+    public Category getCategory() { return category; }
+    public User getUser() { return this.user; }
 
     @Override
     public String toString() {

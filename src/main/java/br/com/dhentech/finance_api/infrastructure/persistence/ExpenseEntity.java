@@ -1,7 +1,6 @@
 package br.com.dhentech.finance_api.infrastructure.persistence;
 
-import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
-import br.com.dhentech.finance_api.core.domain.ExpenseType;
+import br.com.dhentech.finance_api.core.domain.*;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,15 +30,26 @@ public class ExpenseEntity {
     @Column(nullable = false)
     private ExpenseStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
     protected ExpenseEntity() {}
 
-    public ExpenseEntity(UUID id, String description, BigDecimal amount, LocalDate dueDate, ExpenseType type, ExpenseStatus status) {
+    public ExpenseEntity(UUID id, String description, BigDecimal amount, LocalDate dueDate,
+                         ExpenseType type, ExpenseStatus status, User user, Category category) {
         this.id = id;
         this.description = description;
         this.amount = amount;
         this.dueDate = dueDate;
         this.type = type;
         this.status = status;
+        this.user = user;
+        this.category = category;
     }
 
     public UUID getId() { return id; }
@@ -54,4 +64,20 @@ public class ExpenseEntity {
 
     public ExpenseStatus getStatus() { return status; }
 
+    public User getUser() { return user; }
+
+    public Category getCategory() { return category; }
+
+    public static ExpenseEntity fromDomain(Expense expense) {
+        return new ExpenseEntity(
+                expense.getId(),
+                expense.getDescription(),
+                expense.getAmount(),
+                expense.getDueDate(),
+                expense.getType(),
+                expense.getStatus(),
+                expense.getUser(),
+                expense.getCategory()
+        );
+    }
 }

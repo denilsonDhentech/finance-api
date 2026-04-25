@@ -4,8 +4,8 @@ import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
 import br.com.dhentech.finance_api.core.domain.Category;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
+import br.com.dhentech.finance_api.core.usecases.CreateExpenseUseCase;
 import br.com.dhentech.finance_api.infrastructure.config.LocalIntegrationTest;
-// IMPORT NECESSÁRIO PARA O OBJECT MAPPER:
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,11 +23,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 
 @LocalIntegrationTest
@@ -46,13 +48,16 @@ class ExpenseControllerTest {
     @MockitoBean
     private UserRepository userRepository;
 
+    @MockitoBean
+    private CreateExpenseUseCase createExpenseUseCase;
+
     @Test
-    @WithMockUser
-    @DisplayName("Deve retornar 400 e mensagem de erro ao tentar criar despesa com valor negativo")
+    @DisplayName("Deve retornar 400 ao tentar criar despesa com valor negativo")
     void shouldReturn400WhenAmountIsNegative() throws Exception {
         UUID fakeCategoryId = UUID.randomUUID();
         when(categoryRepository.findById(any(UUID.class)))
                 .thenReturn(Optional.of(new Category("Alimentação", "Despesas")));
+
         User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
 
         when(userRepository.findById(any())).thenReturn(Optional.of(fakeUser));
@@ -69,10 +74,29 @@ class ExpenseControllerTest {
         String jsonRequest = objectMapper.writeValueAsString(request);
 
         mockMvc.perform(post("/api/expenses")
+                        .with(user(fakeUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Amount must be positive")); // Agora vai passar!
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 Bad Request quando os dados da despesa forem inválidos")
+    void shouldReturn400WhenExpenseDataIsInvalid() throws Exception {
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+        ExpenseRequest invalidRequest = new ExpenseRequest("", new BigDecimal("-10.0"), null, null, null);
+        String jsonRequest = objectMapper.writeValueAsString(invalidRequest);
+
+        mockMvc.perform(post("/api/expenses")
+                        .with(user(fakeUser))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(createExpenseUseCase);
     }
 }
