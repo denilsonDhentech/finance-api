@@ -6,6 +6,7 @@ import br.com.dhentech.finance_api.application.ports.ExpenseRepositoryPort;
 import br.com.dhentech.finance_api.core.domain.Category;
 import br.com.dhentech.finance_api.core.domain.Expense;
 import br.com.dhentech.finance_api.core.domain.User;
+import br.com.dhentech.finance_api.core.exceptions.ResourceNotFoundException;
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
 import br.com.dhentech.finance_api.mapper.ExpenseMapper;
@@ -39,7 +40,7 @@ public class CreateExpenseUseCase {
         }
 
         Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada para o ID informado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada para o ID informado"));
 
         User loggedUser = userRepository.findById(loggedUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado ou não autorizado"));
