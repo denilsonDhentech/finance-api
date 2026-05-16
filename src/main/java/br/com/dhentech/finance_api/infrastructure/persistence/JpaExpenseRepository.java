@@ -1,6 +1,5 @@
 package br.com.dhentech.finance_api.infrastructure.persistence;
 
-import br.com.dhentech.finance_api.core.domain.Expense;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
