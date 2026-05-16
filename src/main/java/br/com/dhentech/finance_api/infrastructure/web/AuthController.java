@@ -41,7 +41,7 @@ public class AuthController {
             return ResponseEntity.ok(new TokenResponse(token));
 
         } catch (Exception e) {
-            log.warn("❌ Falha de autenticação para {}: {}", request.email(), e.getMessage());
+            log.warn("Falha de autenticação para {}: {}", request.email(), e.getMessage());
             throw e;
         }
     }
