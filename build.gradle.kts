@@ -78,3 +78,7 @@ sonarqube {
 		property("sonar.exclusions", "**/infrastructure/persistence/ExpenseEntity.java, **/infrastructure/mapper/**, **/application/dto/**, **/*Application.java")
 	}
 }
+
+dependencyLocking {
+	lockAllConfigurations()
+}

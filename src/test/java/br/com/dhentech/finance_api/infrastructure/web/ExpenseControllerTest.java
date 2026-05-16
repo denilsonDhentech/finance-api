@@ -1,10 +1,14 @@
 package br.com.dhentech.finance_api.infrastructure.web;
 
 import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
+import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
 import br.com.dhentech.finance_api.core.domain.Category;
+import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
+import br.com.dhentech.finance_api.core.exceptions.ResourceNotFoundException;
 import br.com.dhentech.finance_api.core.usecases.CreateExpenseUseCase;
+import br.com.dhentech.finance_api.core.usecases.GetExpenseByIdUseCase;
 import br.com.dhentech.finance_api.infrastructure.config.LocalIntegrationTest;
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
@@ -31,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 
 @LocalIntegrationTest
@@ -50,6 +55,9 @@ class ExpenseControllerTest {
 
     @MockitoBean
     private CreateExpenseUseCase createExpenseUseCase;
+
+    @MockitoBean
+    private GetExpenseByIdUseCase getExpenseByIdUseCase;
 
     @Test
     @DisplayName("Deve retornar 400 ao tentar criar despesa com valor negativo")
@@ -98,5 +106,51 @@ class ExpenseControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(createExpenseUseCase);
+    }
+
+    @Test
+    @DisplayName("Deve retornar 200 e os detalhes da despesa ao buscar por ID")
+    void shouldReturn200WhenGetExpenseById() throws Exception {
+
+        UUID expenseId = UUID.randomUUID();
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+
+        ExpenseResponse mockResponse = new ExpenseResponse(
+                expenseId,
+                "Teclado Mecânico",
+                new BigDecimal("350.00"),
+                LocalDate.now(),
+                ExpenseType.ONE_TIME,
+                ExpenseStatus.PENDING,
+                "Eletrônicos"
+        );
+
+        when(getExpenseByIdUseCase.execute(expenseId, fakeUser.getId())).thenReturn(mockResponse);
+
+        mockMvc.perform(get("/api/expenses/{id}", expenseId)
+                        .with(user(fakeUser)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(expenseId.toString()))
+                .andExpect(jsonPath("$.description").value("Teclado Mecânico"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 404 Not Found quando a despesa não existir ou for de outro usuário")
+    void shouldReturn404WhenExpenseNotFound() throws Exception {
+        // Cenário
+        UUID expenseId = UUID.randomUUID();
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+        when(getExpenseByIdUseCase.execute(expenseId, fakeUser.getId()))
+                .thenThrow(new ResourceNotFoundException("Despesa não encontrada"));
+
+        mockMvc.perform(get("/api/expenses/{id}", expenseId)
+                        .with(user(fakeUser)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Despesa não encontrada"));
     }
 }
