@@ -48,7 +48,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and Test
-        run: ./gradlew build jacocoTestReport --check-locks --info
+        run: ./gradlew build jacocoTestReport --info
 
       - name: SonarCloud Scan
         env:
