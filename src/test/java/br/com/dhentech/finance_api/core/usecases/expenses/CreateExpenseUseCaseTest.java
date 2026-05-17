@@ -1,4 +1,4 @@
-package br.com.dhentech.finance_api.core.usecases;
+package br.com.dhentech.finance_api.core.usecases.expenses;
 
 import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
 import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
@@ -8,7 +8,6 @@ import br.com.dhentech.finance_api.core.domain.Expense;
 import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
-import br.com.dhentech.finance_api.core.usecases.expenses.CreateExpenseUseCase;
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
 import br.com.dhentech.finance_api.mapper.ExpenseMapper;
