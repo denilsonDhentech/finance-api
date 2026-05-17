@@ -4,6 +4,7 @@ import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
 import br.com.dhentech.finance_api.core.domain.Category;
 import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
+import br.com.dhentech.finance_api.core.usecases.expenses.ListExpensesUseCase;
 import br.com.dhentech.finance_api.infrastructure.persistence.ExpenseEntity;
 import br.com.dhentech.finance_api.infrastructure.persistence.JpaExpenseRepository;
 import br.com.dhentech.finance_api.mapper.ExpenseMapper;

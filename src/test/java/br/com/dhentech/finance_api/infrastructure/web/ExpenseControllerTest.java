@@ -7,8 +7,10 @@ import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
 import br.com.dhentech.finance_api.core.exceptions.ResourceNotFoundException;
-import br.com.dhentech.finance_api.core.usecases.CreateExpenseUseCase;
-import br.com.dhentech.finance_api.core.usecases.GetExpenseByIdUseCase;
+import br.com.dhentech.finance_api.core.usecases.expenses.CreateExpenseUseCase;
+import br.com.dhentech.finance_api.core.usecases.expenses.DeleteExpenseUseCase;
+import br.com.dhentech.finance_api.core.usecases.expenses.GetExpenseByIdUseCase;
+import br.com.dhentech.finance_api.core.usecases.expenses.UpdateExpenseUseCase;
 import br.com.dhentech.finance_api.infrastructure.config.LocalIntegrationTest;
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
@@ -27,8 +29,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -36,6 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 
 @LocalIntegrationTest
@@ -58,6 +62,12 @@ class ExpenseControllerTest {
 
     @MockitoBean
     private GetExpenseByIdUseCase getExpenseByIdUseCase;
+
+    @MockitoBean
+    private UpdateExpenseUseCase updateExpenseUseCase;
+
+    @MockitoBean
+    private DeleteExpenseUseCase deleteExpenseUseCase;
 
     @Test
     @DisplayName("Deve retornar 400 ao tentar criar despesa com valor negativo")
@@ -139,7 +149,6 @@ class ExpenseControllerTest {
     @Test
     @DisplayName("Deve retornar 404 Not Found quando a despesa não existir ou for de outro usuário")
     void shouldReturn404WhenExpenseNotFound() throws Exception {
-        // Cenário
         UUID expenseId = UUID.randomUUID();
         User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
 
@@ -152,5 +161,60 @@ class ExpenseControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Despesa não encontrada"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 200 OK ao atualizar uma despesa com sucesso")
+    void shouldReturn200WhenUpdateExpenseSuccessfully() throws Exception {
+        UUID expenseId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+        ExpenseRequest updateRequest = new ExpenseRequest(
+                "Compra de Mês Atualizada",
+                new BigDecimal("850.00"),
+                LocalDate.now(),
+                ExpenseType.ONE_TIME,
+                categoryId
+        );
+
+        ExpenseResponse mockResponse = new ExpenseResponse(
+                expenseId,
+                "Compra de Mês Atualizada",
+                new BigDecimal("850.00"),
+                LocalDate.now(),
+                ExpenseType.ONE_TIME,
+                ExpenseStatus.PENDING,
+                "Supermercado"
+        );
+
+        when(updateExpenseUseCase.execute(eq(expenseId), any(ExpenseRequest.class), eq(fakeUser.getId())))
+                .thenReturn(mockResponse);
+
+        String jsonRequest = objectMapper.writeValueAsString(updateRequest);
+
+        mockMvc.perform(put("/api/expenses/{id}", expenseId)
+                        .with(user(fakeUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(expenseId.toString()))
+                .andExpect(jsonPath("$.description").value("Compra de Mês Atualizada"))
+                .andExpect(jsonPath("$.amount").value(850.00));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 204 No Content ao excluir uma despesa com sucesso")
+    void shouldReturn204WhenDeleteExpenseSuccessfully() throws Exception {
+        UUID expenseId = UUID.randomUUID();
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+        mockMvc.perform(delete("/api/expenses/{id}", expenseId)
+                        .with(user(fakeUser)))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(deleteExpenseUseCase).execute(expenseId, fakeUser.getId());
     }
 }

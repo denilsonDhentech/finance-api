@@ -1,4 +1,4 @@
-package br.com.dhentech.finance_api.core.usecases;
+package br.com.dhentech.finance_api.core.usecases.expenses;
 
 import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
 import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
