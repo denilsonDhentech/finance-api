@@ -80,4 +80,19 @@ public class ExpenseEntity {
                 expense.getCategory()
         );
     }
+
+
+    public ExpenseEntity copyWith(String newDescription, BigDecimal newAmount, LocalDate newDueDate,
+                                  ExpenseType newType, Category newCategory) {
+        return new ExpenseEntity(
+                this.id,
+                newDescription,
+                newAmount,
+                newDueDate,
+                newType,
+                this.status,
+                this.user,
+                newCategory
+        );
+    }
 }
