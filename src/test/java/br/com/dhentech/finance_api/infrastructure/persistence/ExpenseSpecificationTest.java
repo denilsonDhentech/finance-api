@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 
 @DataJpaTest
@@ -65,5 +66,13 @@ class ExpenseSpecificationTest {
         List<ExpenseEntity> results = expenseRepository.findAll(spec);
 
         assertEquals(1, results.size(), "Deveria ter encontrado a despesa salva");
+    }
+
+    @Test
+    @DisplayName("Deve retornar null quando o filtro for nulo (exercitando condicionais)")
+    void shouldReturnNullWhenFilterIsNull() {
+        assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
+        assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
+        assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
     }
 }

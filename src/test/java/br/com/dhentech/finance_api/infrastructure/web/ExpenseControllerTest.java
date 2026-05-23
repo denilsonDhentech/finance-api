@@ -1,16 +1,15 @@
 package br.com.dhentech.finance_api.infrastructure.web;
 
+import br.com.dhentech.finance_api.application.dto.ExpenseFilter;
 import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
 import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
+import br.com.dhentech.finance_api.application.dto.PagedResponse;
 import br.com.dhentech.finance_api.core.domain.Category;
 import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
 import br.com.dhentech.finance_api.core.exceptions.ResourceNotFoundException;
-import br.com.dhentech.finance_api.core.usecases.expenses.CreateExpenseUseCase;
-import br.com.dhentech.finance_api.core.usecases.expenses.DeleteExpenseUseCase;
-import br.com.dhentech.finance_api.core.usecases.expenses.GetExpenseByIdUseCase;
-import br.com.dhentech.finance_api.core.usecases.expenses.UpdateExpenseUseCase;
+import br.com.dhentech.finance_api.core.usecases.expenses.*;
 import br.com.dhentech.finance_api.infrastructure.config.LocalIntegrationTest;
 import br.com.dhentech.finance_api.infrastructure.persistence.CategoryRepository;
 import br.com.dhentech.finance_api.infrastructure.persistence.UserRepository;
@@ -18,7 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -68,6 +69,9 @@ class ExpenseControllerTest {
 
     @MockitoBean
     private DeleteExpenseUseCase deleteExpenseUseCase;
+
+    @MockitoBean
+    private ListExpensesUseCase listExpensesUseCase;
 
     @Test
     @DisplayName("Deve retornar 400 ao tentar criar despesa com valor negativo")
@@ -216,5 +220,27 @@ class ExpenseControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(deleteExpenseUseCase).execute(expenseId, fakeUser.getId());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 200 ao listar despesas com sucesso")
+    void shouldListExpenses() throws Exception {
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+
+        PagedResponse<ExpenseResponse> mockResponse = new PagedResponse<>(
+                List.of(), 0, 10, 0, 1, true
+        );
+
+        when(listExpensesUseCase.execute(any(ExpenseFilter.class), anyInt(), anyInt(), eq(fakeUser.getId())))
+                .thenReturn(mockResponse);
+
+        mockMvc.perform(get("/api/expenses")
+                        .with(user(fakeUser))
+                        .param("page", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10));
     }
 }
