@@ -7,6 +7,7 @@ import br.com.dhentech.finance_api.core.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -18,7 +19,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,38 +34,27 @@ class ExpenseSpecificationTest {
     @Autowired
     private TestEntityManager entityManager;
 
-    static Stream<Function<Void, Object>> provideFiltersForNullTests() {
+    private static Stream<Arguments> provideNullFilters() {
         return Stream.of(
-                v -> ExpenseSpecification.hasStartDate(null),
-                v -> ExpenseSpecification.hasEndDate(null),
-                v -> ExpenseSpecification.hasCategory(null)
+                Arguments.of((Specification<ExpenseEntity>) ExpenseSpecification.hasStartDate(null)),
+                Arguments.of((Specification<ExpenseEntity>) ExpenseSpecification.hasEndDate(null)),
+                Arguments.of((Specification<ExpenseEntity>) ExpenseSpecification.hasCategory(null))
         );
     }
 
     @Test
-    @DisplayName("Deve filtrar despesas pela data de início corretamente")
+    @DisplayName("Deve filtrar despesas pela data de início corretamente (Caminho 'False')")
     void shouldFilterByStartDate() {
-        Category category = new Category("Alimentação", "Compras de mercado");
-        User user = new User(
-                null,
-                "Dhenilson",
-                "dhenilson@dhentech.com.br",
-                "senha123"
-        );
+        Category category = new Category("Alimentação", "Compras");
+        User user = new User(null, "Dhenilson", "dhenilson@dhentech.com.br", "senha123");
 
         entityManager.persist(category);
         entityManager.persist(user);
 
         LocalDate today = LocalDate.now();
         ExpenseEntity expense = new ExpenseEntity(
-                UUID.randomUUID(),
-                "Compra de teste",
-                new BigDecimal("150.00"),
-                today,
-                ExpenseType.ONE_TIME,
-                ExpenseStatus.PENDING,
-                user,
-                category
+                UUID.randomUUID(), "Compra de teste", new BigDecimal("150.00"),
+                today, ExpenseType.ONE_TIME, ExpenseStatus.PENDING, user, category
         );
         expenseRepository.save(expense);
         entityManager.flush();
@@ -75,32 +64,21 @@ class ExpenseSpecificationTest {
                 .and(ExpenseSpecification.hasStartDate(today));
 
         List<ExpenseEntity> results = expenseRepository.findAll(spec);
+        assertEquals(1, results.size());
+    }
 
-        assertEquals(1, results.size(), "Deveria ter encontrado a despesa salva");
+    @ParameterizedTest
+    @MethodSource("provideNullFilters")
+    @DisplayName("Deve retornar null para todos os filtros nulos (Caminho 'True')")
+    void shouldReturnNullForNullFilters(Specification<ExpenseEntity> spec) {
+        assertNull(spec.toPredicate(null, null, null));
     }
 
     @Test
-    @DisplayName("Deve retornar null quando o filtro for nulo (exercitando condicionais)")
-    void shouldReturnNullWhenFilterIsNull() {
-        assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
-        assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
-        assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
-    }
-
-    @Test
-    @DisplayName("Deve retornar null quando os filtros forem nulos (cobertura de branch)")
-    void shouldReturnNullWhenFiltersAreNull() {
-        assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
-        assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
-        assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
-    }
-
-    @Test
-    @DisplayName("Deve cobrir todos os branches de filtros nulos")
-    void shouldCoverAllBranchPaths() {
-        assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
-        assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
-        assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
+    @DisplayName("Deve cobrir o caminho 'false' dos filtros (valores não nulos)")
+    void shouldCoverFilterFalsePaths() {
+        assertNotNull(ExpenseSpecification.hasEndDate(LocalDate.now()));
+        assertNotNull(ExpenseSpecification.hasCategory(UUID.randomUUID()));
     }
 
     @Test
@@ -109,25 +87,5 @@ class ExpenseSpecificationTest {
         var constructor = ExpenseSpecification.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         assertThrows(java.lang.reflect.InvocationTargetException.class, constructor::newInstance);
-    }
-
-    @Test
-    @DisplayName("Deve cobrir o caminho 'false' dos filtros (quando valores não são nulos)")
-    void shouldCoverFilterFalsePaths() {
-        UUID categoryId = UUID.randomUUID();
-        LocalDate date = LocalDate.now();
-
-        assertNotNull(ExpenseSpecification.hasEndDate(date));
-        assertNotNull(ExpenseSpecification.hasCategory(categoryId));
-
-        var specDate = ExpenseSpecification.hasEndDate(date);
-        assertNotNull(specDate);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideFiltersForNullTests")
-    @DisplayName("Deve retornar null para todos os filtros quando o valor for nulo")
-    void shouldReturnNullForAllNullFilters(Function<Void, Object> filterFunction) {
-        assertNull(((Specification<?>) filterFunction.apply(null)).toPredicate(null, null, null));
     }
 }
