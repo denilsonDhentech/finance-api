@@ -1,6 +1,8 @@
 package br.com.dhentech.finance_api.core.usecases.expenses;
 
+import br.com.dhentech.finance_api.application.dto.ExpenseFilter;
 import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
+import br.com.dhentech.finance_api.application.dto.PagedResponse;
 import br.com.dhentech.finance_api.core.domain.Category;
 import br.com.dhentech.finance_api.core.domain.ExpenseStatus;
 import br.com.dhentech.finance_api.core.domain.ExpenseType;
@@ -13,10 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -42,7 +42,10 @@ class ListExpensesUseCaseTest {
     @DisplayName("Deve retornar uma página de despesas (ExpenseResponse) pertencentes ao usuário")
     void shouldReturnExpenseListForGivenUser() {
         UUID loggedUserId = UUID.randomUUID();
-        Pageable pageable = PageRequest.of(0, 10);
+        ExpenseFilter emptyFilter = new ExpenseFilter(null, null, null);
+        int page = 0;
+        int size = 10;
+
         Category mockCategory = new Category("Alimentação", "Compras de mercado");
 
         ExpenseEntity entity = new ExpenseEntity(
@@ -61,24 +64,27 @@ class ListExpensesUseCaseTest {
                 LocalDate.of(2026, 5, 10), ExpenseType.ONE_TIME, ExpenseStatus.PENDING, "Alimentação"
         );
 
-        Page<ExpenseEntity> pagedResponse = new PageImpl<>(List.of(entity));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dueDate"));
+        Page<ExpenseEntity> pagedResponse = new PageImpl<>(List.of(entity), pageable, 1);
 
-        when(expenseRepository.findAllByUser_IdOrderByDueDateDesc(eq(loggedUserId), any(Pageable.class)))
+        when(expenseRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(pagedResponse);
 
         when(expenseMapper.toResponse(any(ExpenseEntity.class))).thenReturn(expectedResponse);
 
-        Page<ExpenseResponse> result = listExpensesUseCase.execute(loggedUserId, pageable);
+        PagedResponse<ExpenseResponse> result = listExpensesUseCase.execute(emptyFilter, page, size, loggedUserId);
 
         assertNotNull(result, "A página não deveria ser nula");
-        assertEquals(1, result.getTotalElements(), "A página deveria conter 1 item");
+        assertEquals(1, result.totalElements(), "A página deveria conter 1 item");
+        assertEquals(0, result.page());
+        assertEquals(10, result.size());
 
-        ExpenseResponse response = result.getContent().get(0);
+        ExpenseResponse response = result.content().get(0);
         assertEquals("Mercado", response.description());
         assertEquals(new BigDecimal("150.00"), response.amount());
         assertEquals("Alimentação", response.categoryName());
 
-        verify(expenseRepository, times(1)).findAllByUser_IdOrderByDueDateDesc(eq(loggedUserId), any(Pageable.class));
+        verify(expenseRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
         verify(expenseMapper, times(1)).toResponse(any(ExpenseEntity.class));
     }
 
@@ -86,17 +92,22 @@ class ListExpensesUseCaseTest {
     @DisplayName("Deve retornar uma página vazia caso o usuário não tenha despesas")
     void shouldReturnEmptyListWhenUserHasNoExpenses() {
         UUID loggedUserId = UUID.randomUUID();
-        Pageable pageable = PageRequest.of(0, 10);
+        ExpenseFilter emptyFilter = new ExpenseFilter(null, null, null);
+        int page = 0;
+        int size = 10;
 
-        Page<ExpenseEntity> emptyPage = new PageImpl<>(List.of());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dueDate"));
+        Page<ExpenseEntity> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-        when(expenseRepository.findAllByUser_IdOrderByDueDateDesc(eq(loggedUserId), any(Pageable.class)))
+        when(expenseRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
-        Page<ExpenseResponse> result = listExpensesUseCase.execute(loggedUserId, pageable);
+        PagedResponse<ExpenseResponse> result = listExpensesUseCase.execute(emptyFilter, page, size, loggedUserId);
 
         assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertTrue(result.content().isEmpty());
+        assertEquals(0, result.totalElements());
+
         verify(expenseMapper, never()).toResponse(any(ExpenseEntity.class));
     }
 }

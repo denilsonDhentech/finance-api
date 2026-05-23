@@ -1,13 +1,12 @@
 package br.com.dhentech.finance_api.infrastructure.web;
 
+import br.com.dhentech.finance_api.application.dto.ExpenseFilter;
 import br.com.dhentech.finance_api.application.dto.ExpenseRequest;
 import br.com.dhentech.finance_api.application.dto.ExpenseResponse;
+import br.com.dhentech.finance_api.application.dto.PagedResponse;
 import br.com.dhentech.finance_api.core.domain.User;
 import br.com.dhentech.finance_api.core.usecases.expenses.*;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,11 +47,19 @@ public class ExpenseController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ExpenseResponse>> list(
+    public ResponseEntity<PagedResponse<ExpenseResponse>> list(
             @AuthenticationPrincipal User loggedUser,
-            @PageableDefault(size = 10, sort = "dueDate") Pageable pageable
+            ExpenseFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        Page<ExpenseResponse> response = listExpensesUseCase.execute(loggedUser.getId(), pageable);
+        PagedResponse<ExpenseResponse> response = listExpensesUseCase.execute(
+                filter,
+                page,
+                size,
+                loggedUser.getId()
+        );
+
         return ResponseEntity.ok(response);
     }
 
