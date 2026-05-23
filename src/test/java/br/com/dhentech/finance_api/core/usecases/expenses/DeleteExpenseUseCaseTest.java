@@ -54,6 +54,6 @@ class DeleteExpenseUseCaseTest {
 
         assertEquals("Despesa não encontrada ou não pertence ao usuário logado", exception.getMessage());
         verify(expenseRepository, times(1)).findByIdAndUser_Id(expenseId, userId);
-        verify(expenseRepository, never()).delete(any());
+        verify(expenseRepository, never()).delete(any(ExpenseEntity.class));
     }
 }
