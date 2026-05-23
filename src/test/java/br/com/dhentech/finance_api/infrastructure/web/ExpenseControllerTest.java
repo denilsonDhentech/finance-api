@@ -243,4 +243,30 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(10));
     }
+
+    @Test
+    @DisplayName("Deve listar despesas aplicando filtros de data e categoria")
+    void shouldListExpensesWithFilters() throws Exception {
+        User fakeUser = new User(UUID.randomUUID(), "Denilson", "denilson@teste.com", "senha123");
+        UUID categoryId = UUID.randomUUID();
+
+        PagedResponse<ExpenseResponse> mockResponse = new PagedResponse<>(
+                List.of(), 0, 10, 0, 1, true
+        );
+
+        when(listExpensesUseCase.execute(any(ExpenseFilter.class), eq(0), eq(10), eq(fakeUser.getId())))
+                .thenReturn(mockResponse);
+
+        mockMvc.perform(get("/api/expenses")
+                        .with(user(fakeUser))
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("startDate", "2026-05-01")
+                        .param("endDate", "2026-05-31")
+                        .param("categoryId", categoryId.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(listExpensesUseCase).execute(any(ExpenseFilter.class), eq(0), eq(10), eq(fakeUser.getId()));
+    }
 }

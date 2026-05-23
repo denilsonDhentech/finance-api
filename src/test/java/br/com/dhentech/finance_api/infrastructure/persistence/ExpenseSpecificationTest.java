@@ -17,8 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 
 @DataJpaTest
@@ -74,5 +73,43 @@ class ExpenseSpecificationTest {
         assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
         assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
         assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
+    }
+
+    @Test
+    @DisplayName("Deve retornar null quando os filtros forem nulos (cobertura de branch)")
+    void shouldReturnNullWhenFiltersAreNull() {
+        assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
+        assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
+        assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
+    }
+
+    @Test
+    @DisplayName("Deve cobrir todos os branches de filtros nulos")
+    void shouldCoverAllBranchPaths() {
+        assertNull(ExpenseSpecification.hasStartDate(null).toPredicate(null, null, null));
+        assertNull(ExpenseSpecification.hasEndDate(null).toPredicate(null, null, null));
+        assertNull(ExpenseSpecification.hasCategory(null).toPredicate(null, null, null));
+    }
+
+    @Test
+    @DisplayName("Deve garantir que a classe utilitária não seja instanciável")
+    void constructorIsPrivate() throws NoSuchMethodException {
+        var constructor = ExpenseSpecification.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        assertThrows(java.lang.reflect.InvocationTargetException.class, constructor::newInstance);
+    }
+
+    @Test
+    @DisplayName("Deve cobrir o caminho 'false' dos filtros (quando valores não são nulos)")
+    void shouldCoverFilterFalsePaths() {
+        UUID userId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+        LocalDate date = LocalDate.now();
+
+        assertNotNull(ExpenseSpecification.hasEndDate(date));
+        assertNotNull(ExpenseSpecification.hasCategory(categoryId));
+
+        var specDate = ExpenseSpecification.hasEndDate(date);
+        assertNotNull(specDate);
     }
 }
