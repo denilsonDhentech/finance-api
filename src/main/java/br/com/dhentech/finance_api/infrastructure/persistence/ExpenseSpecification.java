@@ -7,6 +7,10 @@ import java.util.UUID;
 
 public class ExpenseSpecification {
 
+    private ExpenseSpecification() {
+        throw new UnsupportedOperationException("Classe utilitária");
+    }
+
     public static Specification<ExpenseEntity> belongsToUser(UUID userId) {
         return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
     }
