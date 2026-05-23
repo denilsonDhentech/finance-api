@@ -6,6 +6,8 @@ import br.com.dhentech.finance_api.core.domain.ExpenseType;
 import br.com.dhentech.finance_api.core.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -16,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
@@ -29,6 +33,14 @@ class ExpenseSpecificationTest {
 
     @Autowired
     private TestEntityManager entityManager;
+
+    static Stream<Function<Void, Object>> provideFiltersForNullTests() {
+        return Stream.of(
+                v -> ExpenseSpecification.hasStartDate(null),
+                v -> ExpenseSpecification.hasEndDate(null),
+                v -> ExpenseSpecification.hasCategory(null)
+        );
+    }
 
     @Test
     @DisplayName("Deve filtrar despesas pela data de início corretamente")
@@ -102,7 +114,6 @@ class ExpenseSpecificationTest {
     @Test
     @DisplayName("Deve cobrir o caminho 'false' dos filtros (quando valores não são nulos)")
     void shouldCoverFilterFalsePaths() {
-        UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
         LocalDate date = LocalDate.now();
 
@@ -111,5 +122,12 @@ class ExpenseSpecificationTest {
 
         var specDate = ExpenseSpecification.hasEndDate(date);
         assertNotNull(specDate);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideFiltersForNullTests")
+    @DisplayName("Deve retornar null para todos os filtros quando o valor for nulo")
+    void shouldReturnNullForAllNullFilters(Function<Void, Object> filterFunction) {
+        assertNull(((Specification<?>) filterFunction.apply(null)).toPredicate(null, null, null));
     }
 }
